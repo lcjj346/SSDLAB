@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('Cloning Git') {
       steps {
-        git 'ssh://git@54.90.171.99:2222/git-server/repos/webapp.git'
+        git 'ssh://git@54.158.145.132:2222/git-server/repos/webapp.git'
       }
     }
     stage('Building Docker Image') {
