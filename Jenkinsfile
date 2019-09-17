@@ -29,6 +29,23 @@ pipeline {
         }
       }
     }
-   
+  
+def remote = [:]
+remote.name = "ubuntu"
+remote.host = "54.158.145.132:22"
+remote.allowAnyHosts = true
+
+        stage("Latest Docker Image Deploy") {
+            
+            sshCommand remote: remote, command: 'docker pull bkshashi9/webapp:latest 
+                      docker stop webapp
+                      docker rm webapp  
+                      docker rmi bkshashi9/webapp:current
+                      docker tag bkshashi9/webapp:latest bkshashi9/webapp:current  
+                      docker run -d --name webapp -p 8082:80 bkshashi9/webapp:latest'
+          
+        }
+
+ 
   }
 }
