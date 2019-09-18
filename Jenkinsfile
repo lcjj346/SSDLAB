@@ -45,7 +45,13 @@ stage ('Deploy') {
     }
 }
 
-
+stage('Remove Unused docker image') {
+      steps{
+sshagent(credentials : ['ubuntu']) {       
+ sh "docker rmi $registry:$BUILD_NUMBER"
+      }
+}
+    }
 
       
     }
