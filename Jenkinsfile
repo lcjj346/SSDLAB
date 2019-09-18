@@ -3,6 +3,7 @@ pipeline {
     registry = "bkshashi9/webapp"
     registryCredential = 'dockerhub'
     dockerImage = ''
+
   }
   agent any
   stages {
@@ -30,25 +31,26 @@ pipeline {
       }
     }
 
-def remote = [:]
-remote.name = "ubuntu"
-remote.host = "54.158.145.132:22"
-remote.allowAnyHosts = true
 
-        stage("Latest Docker Image Deploy") {
-            
-            sshCommand remote: remote, command: "docker pull bkshashi9/webapp:latest "
-            sshCommand remote: remote, command: "docker stop webapp "
-            sshCommand remote: remote, command: "docker rm webapp "
-            sshCommand remote: remote, command: "docker rmi bkshashi9/webapp:current"
-            sshCommand remote: remote, command: "docker tag bkshashi9/webapp:latest bkshashi9/webapp:current"
-            sshCommand remote: remote, command: "docker run -d --name webapp -p 8082:80 bkshashi9/webapp:latest"                       
-                                
-          
+stage ('Deploy') {
+    steps{
+        sshagent(credentials : ['ubuntu']) {
+            sh 'docker pull bkshashi9/webapp:latest'
+            sh 'docker stop webapp'
+            sh 'docker rm webapp'
+            sh 'docker rmi bkshashi9/webapp:current'
+            sh 'docker tag bkshashi9/webapp:latest bkshashi9/webapp:current'
+            sh 'docker run -d --name webapp -p 8082:80 bkshashi9/webapp:latest'
         }
+    }
+}
+
+
+
+      
     }
 
    
   }
-}
+
 
