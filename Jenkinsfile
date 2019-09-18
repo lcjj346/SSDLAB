@@ -38,7 +38,7 @@ stage ('Deploy') {
             sh 'docker pull bkshashi9/webapp:latest'
             sh 'docker stop webapp'
             sh 'docker rm webapp'
-            sh 'docker rmi bkshashi9/webapp:current'
+            sh 'docker rmi bkshashi9/webapp:current || true'
             sh 'docker tag bkshashi9/webapp:latest bkshashi9/webapp:current'
             sh 'docker run -d --name webapp -p 8082:80 bkshashi9/webapp:latest'
         }
