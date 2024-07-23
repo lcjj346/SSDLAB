@@ -1,62 +1,63 @@
 pipeline {
-  environment {
-    registry = "bkshashi9/webapp"
-    registryCredential = 'dockerhub'
-    dockerImage = ''
+    agent any
 
-  }
-  agent any
-  stages {
-    stage('Cloning Git') {
-      steps {
-        git 'ssh://git@18.139.110.189:2222/git-server/repos/webapp.git'
-      }
+    environment {
+        DEPENDENCY_CHECK_CMD = 'dependency-check --noupdate'
+        UI_TEST_CMD = 'curl -s -o /dev/null -w "%{http_code}" http://webapp'
     }
-    stage('Building Docker image') {
-      steps{
-        script {
-          dockerImage = docker.build registry + ":$BUILD_NUMBER"
-          
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'master', url: 'https://github.com/your-repo/webapp'
+            }
         }
-      }
-    }
-    stage('Push Image to Docker Hub ') {
-      steps{
-        script {
-          docker.withRegistry( '', registryCredential ) {
-            dockerImage.push()
-            dockerImage.push('latest')
-          }
+
+        stage('Build') {
+            steps {
+                script {
+                    sh 'docker-compose -f docker-compose.yml up -d --build'
+                }
+            }
         }
-      }
+
+        stage('Dependency Check') {
+            steps {
+                script {
+                    sh "${DEPENDENCY_CHECK_CMD}"
+                }
+            }
+        }
+
+        stage('Integration Test') {
+            steps {
+                script {
+                    sh "${UI_TEST_CMD}"
+                }
+            }
+        }
+
+        stage('Teardown') {
+            steps {
+                script {
+                    sh 'docker-compose -f docker-compose.yml down'
+                }
+            }
+        }
     }
 
+    post {
+        always {
+            archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+            junit '**/target/test-classes/testng-results.xml'
+        }
 
-stage ('Deploy') {
-    steps{
-        sshagent(credentials : ['ubuntu']) {
-            sh 'docker pull bkshashi9/webapp:latest'
-            sh 'docker stop webapp'
-            sh 'docker rm webapp'
-            sh 'docker rmi bkshashi9/webapp:current || true'
-            sh 'docker tag bkshashi9/webapp:latest bkshashi9/webapp:current'
-            sh 'docker run -d --name webapp -p 8082:80 bkshashi9/webapp:latest'
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
-
-stage('Remove Unused docker image') {
-      steps{
-sshagent(credentials : ['ubuntu']) {       
- sh "docker rmi $registry:$BUILD_NUMBER"
-      }
-}
-    }
-
-      
-    }
-
-   
-  }
-
-
