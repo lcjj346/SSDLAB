@@ -1,63 +1,33 @@
 pipeline {
     agent any
-
-    environment {
-        DEPENDENCY_CHECK_CMD = 'dependency-check --noupdate'
-        UI_TEST_CMD = 'curl -s -o /dev/null -w "%{http_code}" http://webapp'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'master', url: 'https://github.com/your-repo/webapp'
+                git branch: 'main', url: 'https://github.com/lcjj346/SSDLAB.git'
             }
         }
-
-        stage('Build') {
-            steps {
-                script {
-                    sh 'docker-compose -f docker-compose.yml up -d --build'
-                }
-            }
-        }
-
         stage('Dependency Check') {
             steps {
-                script {
-                    sh "${DEPENDENCY_CHECK_CMD}"
-                }
+                sh 'dependency-check --noupdate --scan ./webapp'
             }
         }
-
-        stage('Integration Test') {
+        stage('Integration Testing') {
             steps {
-                script {
-                    sh "${UI_TEST_CMD}"
-                }
+                // Add commands for integration testing
+                sh 'php ./webapp/tests/integration_tests.php'
             }
         }
-
-        stage('Teardown') {
+        stage('UI Testing') {
             steps {
-                script {
-                    sh 'docker-compose -f docker-compose.yml down'
-                }
+                // Add commands for UI testing
+                sh 'php ./webapp/tests/ui_tests.php'
             }
         }
     }
-
     post {
         always {
-            archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
-            junit '**/target/test-classes/testng-results.xml'
-        }
-
-        success {
-            echo 'Pipeline completed successfully.'
-        }
-
-        failure {
-            echo 'Pipeline failed.'
+            archiveArtifacts artifacts: '**/target/*.html', allowEmptyArchive: true
+            junit 'target/test-*.xml'
         }
     }
 }
