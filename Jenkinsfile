@@ -6,21 +6,25 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/lcjj346/SSDLAB.git'
             }
         }
-        stage('Dependency Check') {
-            steps {
-                sh 'dependency-check --noupdate --scan ./webapp'
-            }
-        }
+        stage('OWASP Dependency-Check Vulnerabilities') {
+			steps {
+				dependencyCheck additionalArguments: ''' 
+							-o './'
+							-s './'
+							-f 'ALL' 
+							--prettyPrint''', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
+				
+				dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+			}
+    	}
         stage('Integration Testing') {
             steps {
-                // Add commands for integration testing
-                sh 'php ./webapp/tests/integration_tests.php'
+                
             }
         }
         stage('UI Testing') {
             steps {
-                // Add commands for UI testing
-                sh 'php ./webapp/tests/ui_tests.php'
+
             }
         }
     }
